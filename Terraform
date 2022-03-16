@@ -1,0 +1,1520 @@
+Note: This is a cheat sheet prepared for easy copying of commands. For detailed
+course material, please use the skillpipe document (https://www.skillpipe.com/) 
+
+Terraform Labs Steps
+==================
+
+Login to AWS Console
+
+###################################
+Lab 1: Creating an EC2 Instance in AWS and Installing Terraform
+###################################
+
+Installing Terraform on Ubuntu 20.04 operating system
+---------------------------------------------------
+Launch a t2.micro instance with OS version Ubuntu 20.04 (North Virginia / us-east-1)
+In sec group, include ports 22 and 80. Use tag 'Name:Terraform'
+
+After EC2 is ready:
+
+sudo hostnamectl set-hostname terraform
+# Hostname will appear if you exit and login again. Or you can type 'bash' and open another shell
+
+sudo apt update
+sudo apt install wget unzip -y
+
+wget https://releases.hashicorp.com/terraform/1.1.7/terraform_1.1.7_linux_amd64.zip
+unzip terraform_1.1.7_linux_amd64.zip
+
+ls
+sudo mv terraform /usr/local/bin
+ls
+terraform
+terraform -v
+
+
+Task 2: Install and login to AWS CLI from EC2 Instance
+======================================================
+sudo apt-get install python3-pip -y
+sudo pip3 install awscli
+
+aws configure
+Add AKID
+Add SAK
+
+aws s3 ls
+
+# Now we are ready to perform the labs
+
+
+###################################
+Lab 2A : Launching your first AWS EC2 instance using Terraform 
+###################################
+mkdir terraform-labs && cd terraform-labs/
+
+vi example.tf
+
+# Add the given lines, by pressing "INSERT" 
+
+provider "aws" {
+  profile = "default"
+  region  = "us-east-2"
+}
+
+resource "aws_instance" "example" {
+  ami           = "ami-07efac79022b86107"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "yourname-TF-1"
+  }
+}
+
+
+# save the file using "ESCAPE + :wq!"
+
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply
+
+ls
+cat terraform.tfstate
+
+vi example.tf
+
+# Add the given lines, by pressing "INSERT" 
+
+provider "aws" {
+  profile = "default"
+  region  = "us-east-2"
+}
+
+resource "aws_instance" "example" {
+  ami           = "ami-0e82959d4ed12de3f"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "yourname-TF-1"
+  }
+}
+
+
+# save the file using "ESCAPE + :wq!"
+
+terraform plan
+terraform apply
+cat terraform.tfstate
+
+# Use the "terraform destroy" command for cleaning the infrastructure used in this lab
+terraform destroy
+
+
+
+###################################
+Lab 2B : AWS EC2 instance creation using Terraform Variables
+###################################
+
+Task 1: Create EC2 instance using variables 
+===========================================
+
+cd /home/ubuntu/terraform-labs/
+mkdir variables-lab
+cd variables-lab/
+
+vi provider.tf
+
+# Add the given lines, by pressing "INSERT" 
+
+provider "aws"{
+  access_key=var.AWS_ACCESS_KEY
+  secret_key=var.AWS_SECRET_KEY
+  region=var.AWS_REGION
+}
+
+# save the file using "ESCAPE + :wq!"
+
+vi vars.tf
+
+# Add the given lines, by pressing "INSERT" 
+
+variable "AWS_ACCESS_KEY"{}
+variable "AWS_SECRET_KEY"{}
+variable "AWS_REGION"{
+  default = "us-east-2"
+}
+
+# save the file using "ESCAPE + :wq!"
+
+vi terraform.tfvars
+
+# Add the given lines, by pressing "INSERT" 
+
+AWS_ACCESS_KEY="< Insert your AWS Access Key >"
+AWS_SECRET_KEY="< Insert your AWS Secret Key >"
+
+# save the file using "ESCAPE + :wq!"
+
+vi instance.tf
+
+# Add the given lines, by pressing "INSERT" 
+
+resource "aws_instance" "terraform_example"{
+  ami = "ami-0d5d9d301c853a04a"
+  instance_type="t2.micro"
+  tags = {
+    Name = "yourname-Lab2B"
+  }
+}
+
+# save the file using "ESCAPE + :wq!"
+
+terraform init
+terraform plan
+terraform apply
+
+#Try this method also
+terraform plan -out variable_plan.txt
+terraform apply "variable_plan.txt"
+
+
+# Use the "terraform destroy" command for cleaning the infrastructure used in this lab
+terraform destroy -auto-approve
+
+# Additional Note
+# If the name of the tfvars files is anything other than terraform.tfvars then you can 
+# use the below command.
+terraform apply -var-file=<var file name>
+
+
+Task 2: Implementing map variables that dynamically fetch AMI based on the Linux distro selected
+==============================================================================================
+
+TO BE ADDEDvi instance.tf
+
+# Delete the existing lines and Add the given lines, by pressing "INSERT" 
+
+resource "aws_instance" "terraform_example"{
+  ami = var.AMIS[var.Linux_distro]
+  instance_type="t2.micro"
+  tags = {
+    Name = "yourname-lab8B-task2"
+  }
+}
+
+# save the file using "ESCAPE + :wq!"
+
+vi vars.tf
+
+# Delete the existing lines and Add the given lines, by pressing "INSERT" 
+
+variable "AWS_ACCESS_KEY"{}
+variable "AWS_SECRET_KEY"{}
+variable "AWS_REGION"{
+  default = "us-east-2"
+  }
+
+variable "Linux_distro"{
+  #description="Please Enter the Linux distro ( redhat , ubuntu, amazon )"
+  default = "amazon"
+  }
+
+variable "AMIS"{
+  type=map(string)
+  default={
+   redhat="ami-0ba62214afa52bec7"
+   ubuntu="ami-0fb653ca2d3203ac1"
+   amazon="ami-0231217be14a6f3ba"
+  }
+}
+
+# save the file using "ESCAPE + :wq!"
+
+terraform fmt
+terraform validate
+terraform plan -var 'Linux_distro=redhat' -out myplan
+terraform apply myplan
+
+
+# Use the "terraform destroy" command for cleaning the infrastructure used in this lab
+terraform destroy
+
+
+
+###################################
+Lab 3 : Using Output Feature 
+###################################
+
+
+Task 1: Using output feature of Terraform to get the IP Address of EC2 Instance
+===============================================================================
+
+cd /home/ubuntu/terraform-labs/
+wget files.cloudthat.training/devops/terraform-essentials/output-variable-lab-v0.13.5.tar.gz
+tar -xvf output-variable-lab-v0.13.5.tar.gz
+cd output-variable-lab/
+ls
+
+cat instance.tf
+cat output.tf
+cat vars.tf
+
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply
+
+ls 
+cat private_ips.txt 
+
+terraform output
+terraform output Public_ip
+terraform output Private_ip
+
+# Use the "terraform destroy" command for cleaning the infrastructure used in this lab, remove the 
+  directory using rm -rf
+
+terraform destroy
+
+cd ..
+rm -rf output-variable-lab
+
+
+###################################
+Lab 4 : Remote State using Amazon Simple Storage Service 
+###################################
+
+Task 1: Create a S3 Bucket on AWS Console 
+=========================================
+# Create a new S3 bucket. Remove block public access. Enable versioning. 
+aws s3 ls
+ 
+Task 2: Configure Remote State
+==============================
+cd /home/ubuntu/terraform-labs/
+wget files.cloudthat.training/devops/terraform-essentials/remote_state_lab.tar.gz
+tar -zxvf remote_state_lab.tar.gz
+cd remote-state-lab
+ls
+cat instance.tf
+cat vars.tf
+cat provider.tf
+
+vi backend.tf
+
+# Add the given lines, by pressing "INSERT" 
+
+terraform {
+  backend "s3" {
+    bucket = "<Replace your s3 bucket name>"
+    key    = "terraform/remotestate"
+  }
+}
+
+# save the file using "ESCAPE + :wq!"
+
+cat backend.tf
+
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply
+
+ls -la
+terraform refresh
+
+# This command shows the attributes of a single resource in the Terraform state.
+terraform state show aws_instance.terraform-remoteState
+
+# Use the "terraform destroy" command for cleaning the infrastructure used in this lab, 
+# remove the directory using rm -rf
+
+terraform destroy
+
+cd ..
+rm -rf remote-state-lab
+
+
+######################
+Recap - Self Exercises 
+######################
+
+SE Lab 1
+========
+Launch a t2.small instance in us-west-1 region.
+You can use the ami id given at the end of the cheat sheet.
+Add tag as 'yourname-SELab1'
+(Use Lab 8A for reference) 
+
+start by creating new directory 'SELab1'
+
+After the lab is done, use terraform destroy to terminate the resources
+
+
+SE Lab 2
+========
+Repeat SELab1. This time, instead of populating the instance_type directly, convert 
+it into a variable (ex: variable ec2_instance_type { })
+Use t2.small as the default value for the variable. 
+Add tag as 'yourname-SELab2'
+Launch the instance accordingly.
+
+start by creating new directory 'SELab2'
+
+After the lab is done, use terraform destroy to terminate the resources
+
+
+SE Lab 3
+========
+Repeat SELab1. Use output variables to printout the abvailability_zone corresponding to the 
+ec2 instance. Given below is the 'output.tf' file (from Lab9) for your reference. 
+
+output "Public_ip" {
+  description = "Public IP of the instance"
+  value = aws_instance.example.public_ip 
+}
+
+Instead of public_ip, use the variable name 'availability_zone'
+
+Add tag as 'yourname-SELab3'
+
+Start by creating new directory 'SELab3'
+
+After the lab is done, use terraform destroy to terminate the resources
+
+
+###################################
+Lab 5 : Launching VPC and EC2 Instance 
+###################################
+
+Task 1: Launching VPC and creating subnets
+==========================================
+
+cd /home/ubuntu/
+wget files.cloudthat.training/devops/terraform-essentials/lab_10_vpc_v0.13.tar.gz
+tar -xvf lab_10_vpc_v0.13.tar.gz
+
+cd lab_10_vpc/
+ls
+
+cat vpc.tf
+cat nat.tf
+cat vars.tf
+
+terraform init
+terraform plan
+terraform apply
+
+
+Task 2: Launching an EC2 Instance 
+=================================
+vi instance.tf 
+
+# Add the given lines, by pressing "INSERT" 
+
+resource "aws_instance" "example" {
+  ami           = var.AMIS[var.AWS_REGION]
+  instance_type = "t2.micro"
+  # the VPC subnet
+  subnet_id = aws_subnet.main-public-1.id
+  # the security group
+  vpc_security_group_ids = [aws_security_group.allow-ssh.id]
+  # the public SSH key
+  key_name = aws_key_pair.mykeypair.key_name
+  tags = {
+    Name = "yourname-Lab5-ec2"
+}
+
+
+# save the file using "ESCAPE + :wq!"
+
+vi securitygroup.tf
+
+# Add the given lines, by pressing "INSERT" 
+
+resource "aws_security_group" "allow-ssh" {
+  vpc_id      = aws_vpc.main.id
+  name        = "yourname-allow-ssh"
+  description = "security group that allows ssh and all egress traffic"
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = {
+    Name = "yourname-allow-ssh"
+  }
+}
+
+
+# save the file using "ESCAPE + :wq!"
+
+ssh-keygen -f mykey
+ls
+vi key.tf
+
+# Add the given lines, by pressing "INSERT" 
+
+resource "aws_key_pair" "mykeypair" {
+  key_name   = "mykeypair"
+  public_key = file(var.PATH_TO_PUBLIC_KEY)
+}
+
+# save the file using "ESCAPE + :wq!"
+
+vi vars.tf
+
+# Add the given lines, by pressing "INSERT" 
+
+variable "AWS_REGION" {
+  default = "us-east-2"
+}
+variable "PATH_TO_PRIVATE_KEY" {
+  default = "mykey"
+}
+variable "PATH_TO_PUBLIC_KEY" {
+  default = "mykey.pub"
+}
+variable "AMIS" {
+  type = map(string)
+  default = {
+    us-east-2 = "ami-059d836af932792c3"
+    us-west-2 = "ami-0a7d051a1c4b54f65"
+    eu-west-1 = "ami-04c58523038d79132"
+  }
+}
+
+
+# save the file using "ESCAPE + :wq!"
+
+terraform fmt
+terraform validate
+terraform plan
+terraform apply
+
+terraform state show aws_instance.example | grep public_ip
+
+ssh -i mykey -l ubuntu <Your Public IP>
+
+exit
+
+
+Task 3: Connecting an EBS with EC2 Instance 
+===========================================
+
+vi instance.tf 
+
+# Add the given lines, by pressing "INSERT" 
+
+resource "aws_instance" "example" {
+ ami = var.AMIS[var.AWS_REGION]
+ instance_type = "t2.micro"
+ # the VPC subnet
+ subnet_id = aws_subnet.main-public-1.id
+ # the security group
+ vpc_security_group_ids = [aws_security_group.allow-ssh.id]
+ # the public SSH key
+ key_name = aws_key_pair.mykeypair.key_name
+ tags = {
+   Name = "Unus-Lab5-EC2"
+ }
+}
+resource "aws_ebs_volume" "ebs-volume-1" {
+ availability_zone = "us-east-2a"
+ size = 20
+ type = "gp2"
+ tags = {
+ Name = "Unus extra volume data"
+ }
+}
+resource "aws_volume_attachment" "ebs-volume-1-attachment" {
+ device_name = "/dev/xvdh"
+ volume_id = aws_ebs_volume.ebs-volume-1.id
+ instance_id = aws_instance.example.id
+} 
+
+# save the file using "ESCAPE + :wq!"
+
+terraform apply
+
+# Login to ec2 dashboard. select the ec2. go to storage and see that the new volume is attached
+ssh -i mykey ubuntu@<Public IP>
+
+# Use the "terraform destroy" command for cleaning the infrastructure used in this lab, remove the 
+  directory using rm -rf
+
+terraform destroy
+
+cd ..
+rm -rf lab_10_vpc
+
+
+
+###################################
+Lab 6 : Launching auto scaling services
+###################################
+
+Task 1: Create ASG
+-------------------
+cd /home/ubuntu/
+
+wget files.cloudthat.training/devops/terraform-essentials/lab_14_autoscaling.tar.gz
+tar -zxvf lab_14_autoscaling.tar.gz
+cd lab_14_autoscaling/
+
+ls
+vi autoscaling.tf
+Update the names/tags to include your name
+
+vi autoscalingpolicy.tf
+Update the names/tags to include your name
+
+ssh-keygen -f mykey
+ls
+
+terraform init
+terraform plan
+terraform apply 
+
+
+Task 2: Increase CPU utilization in your new ec2 instance.
+----------------------------------------------------------
+ssh -i mykey -l ubuntu <Public IP> 
+
+sudo apt-get update
+sudo apt-get install stress
+
+# 2 workers spawning sqrt() function. will do for 300 seconds
+
+stress --cpu 3 -v --timeout 300
+
+Follow digify document to observe the metrics for ec2 and the alrams in cloudwatch
+
+
+# Now go back to AWS console > Services > EC2 > Instances and select your instance. Go to its description 
+  and click on Monitoring. You see High CPU utilization  
+# Go to AWS console > Services > CloudWatch > Alarms and view alarm  
+# Go to AWS console > Services > EC2 > Instances. You can see that one more instance is created with same 
+  name.  
+
+
+terraform destroy
+
+
+
+###################################
+Lab 7 : Launching ELB with autoscaling 
+###################################
+cd /home/ubuntu/
+
+wget files.cloudthat.training/devops/terraform-essentials/lab_15_elb_with_autoscaling.tar.gz
+tar -zxvf lab_15_elb_with_autoscaling.tar.gz
+cd lab_15_elb_with_autoscaling/
+
+ls
+vi autoscaling.tf
+
+#In block resource "aws_launch_configuration" "example-launchconfig", replace below line
+user_data = "#!/bin/bash\napt-get update\napt-get -y install nginx\nMYIP=`hostname -I | awk '{print $1}' | cut -d ':' -f2`\necho '<html><h1> Welcome to terraform training </h1></html> IP address of this EC2 is' $MYIP > /var/www/html/index.html"
+
+cat elb.tf
+cat securitygroup.tf
+cat output.tf
+
+# change the tags to include your name. change the key pair name to include your name
+
+ssh-keygen -f mykey
+ls
+
+terraform init
+terraform fmt
+terraform plan
+terraform apply
+
+curl <dns_name>
+host <dns_name>
+curl <public IP of any instance>
+
+
+# Now go back to AWS console > Services > EC2 > Instances and check that two new instances are created.
+
+# Go to AWS console > Services > EC2 > Load Balancers
+
+# Go back to AWS console > Services > EC2 > Instances and terminate one of your instances 
+
+# Go back to AWS console > Services > EC2 > Load Balancers. Select your load balancer and go to description. 
+# Click on instances and verify the status (in service). 
+
+curl <dns_name>
+terraform destroy -auto-approve
+
+
+
+
+###################################
+Lab 8 : Creating a MySQL Database with RDS 
+###################################
+
+cd /home/ubuntu
+
+wget files.cloudthat.training/devops/terraform-essentials/lab_12_rds.tar.gz
+tar -zxvf lab_12_rds.tar.gz
+cd lab_12_rds
+
+ls
+cat rds.tf
+cat output.tf
+
+# change the tags to include your name. change the key pair name to include your name
+
+ssh-keygen -f mykey
+ls
+
+terraform init
+terraform plan
+terraform apply -auto-approve
+
+ssh -i mykey -l ubuntu <PUBLIC IP>
+
+
+sudo apt-get update
+sudo apt-get install mysql-client
+
+mysql -u admin -h <endpoint> -p
+(get endpoint from aws console. do not include port number while entering the endpoint)
+mysql -u admin -h mysql.cfkfveiseeie.us-east-2.rds.amazonaws.com -p
+use 'password' as password.
+
+show databases;
+exit
+
+# create a new database
+create database UnusDB;
+show databases;
+
+use UnusDB
+
+# Use 'status' comamnd to list the DB in which you are in.
+status
+
+# create table
+create table customers(
+   ID   INT              NOT NULL,
+   NAME VARCHAR (20)     NOT NULL,
+   AGE  INT              NOT NULL,
+   ADDRESS  CHAR (25) ,
+   SALARY   DECIMAL (18, 2),       
+   PRIMARY KEY (ID)
+);
+
+# use desc comamnd to check if table is created
+desc customers;
+
+Include some values in the DB:
+INSERT INTO customers (ID,NAME,AGE,ADDRESS,SALARY)
+VALUES (1, 'Ramesh', 32, 'Mysore', 50000.00 );
+
+INSERT INTO customers (ID,NAME,AGE,ADDRESS,SALARY)
+VALUES (2, 'Lakshmi', 25, 'Delhi', 45000.00 );
+
+INSERT INTO customers (ID,NAME,AGE,ADDRESS,SALARY)
+VALUES (3, 'Koshi', 23, 'Trivandrum',55000.00 );
+
+INSERT INTO customers (ID,NAME,AGE,ADDRESS,SALARY)
+VALUES (4, 'Chaitali', 25, 'Mumbai', 65000.00 );
+
+INSERT INTO customers (ID,NAME,AGE,ADDRESS,SALARY)
+VALUES (5, 'Hardik', 27, 'Bhopal', 60000.00 );
+
+INSERT INTO customers (ID,NAME,AGE,ADDRESS,SALARY)
+VALUES (6, 'Komal', 22, 'Bangalore', 45000.00 );
+
+# Display the table:
+SELECT * FROM customers;
+select NAME, AGE from customers;
+
+# To delete the table:
+drop table customers;
+
+# exit from mysql client
+exit
+
+# exit from the mysql anchor ec2
+
+terraform destroy
+
+
+
+
+###################################
+Lab 9 : Creating AWS resources using terraform modules
+###################################
+
+cd /home/ubuntu/
+sudo apt install tree -y
+
+wget files.cloudthat.training/devops/terraform-essentials/terraform-modules.tar.gz
+tar -xvf terraform-modules.tar.gz
+
+cd terraform-modules
+tree
+
+# cat all files to see the module structure
+vi main.tf
+# Add the below code after block module "my_security_group"
+output "secgrpid" {
+  description = "Newly created sec grp"
+  value       = module.my_security_group.sgid
+}
+
+cat provider.tf
+# no change needed
+
+vi variables.tf 
+
+
+# Modify the VPC / Subnet ID / key_name
+
+-Change vpc_id to any VPC in ca-central-1 (ex:vpc-10102478)
+-Change subnet id (use available subnets from AZ a or b. ex: subnet-5189d339)
+-Change key_name to yourname-Lab12-keypair 
+
+
+variable "region" {
+    default = "ca-central-1"
+}
+
+# enter VPC id
+variable "sg_vpcid" {
+    default = "Your VPC ID"
+}
+
+variable "from_port" {
+    default = 22
+}
+
+variable "to_port" {
+    default = 22
+}
+
+# security grp name to be created
+variable  "sg_name" {
+    default = "terraform-sgp"
+}
+
+variable "ami_id" {
+    default = "ami-0e28822503eeedddc"
+}
+
+variable "ins_type" {
+    default = "t2.micro"
+}
+
+# enter a subnet id from Zone A or B
+variable sub_id {
+    default = "Your Subnet ID"
+}
+
+# add your name in key_name
+variable key_name {
+    default = "yourname-key-pair-lab9"
+}
+
+variable from_port2 {
+    default = 80
+}
+
+variable to_port2 {
+    default = 80
+}
+
+variable public_key {
+    default = "mykey.pub"
+}
+
+# Save
+
+# Create a key pair. The public key of the same will be saved into the EC2 being launched.
+ssh-keygen -f mykey
+
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply -auto-approve
+
+Self Exercise Task:
+# Add lines of code to print out the id of the new ec2 created (module.my_ec2.ec2_id)
+# You can refer to how security grp id is outputted.
+
+terraform destroy
+
+
+
+###################################
+Lab 9b : Terraform modules - variable priority
+###################################
+give different values for the same varaible in module and in main. 
+See which one gets priority
+
+
+###################################
+Lab 9c : Terraform modules - Create a module for vpc similar to ec2 module 
+###################################
+
+To form the vpc resource block in your VPC module, you can reuse the VPC resource
+block from any of the previous labs (Lab 5/6/7) 
+
+
+Have a variable defined in the module as below. (vars.tf inside module)
+
+variable "cidr_block"{
+  default = "10.0.0.0/16"
+}
+
+However, from the main.tf, pass the below value for the variable:
+cidr_block       = "10.0.0.0/23"
+
+go to ca-central-1 region and observe the new VPC created
+
+
+###################################
+Lab 9d : Use terraform module from the registry 
+###################################
+
+Use a module from terraform module registry and create the resource in ca-central-l
+https://registry.terraform.io/browse/modules
+
+You can use terraform-aws-modules/vpc
+https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/latest
+
+Reuse Lab12 code. In main.tf, add a block for module VPC. Copy code from above page.
+You will need to pass just two variables 
+cidr      = "172.31.0.0/19"
+name  = "yourname-vpc-with-tf-module"
+
+terraform init
+terraform fmt
+terraform validate
+terraform apply -auto-approve
+
+#Remove the infra after the lab
+terraform destroy --auto-approve
+
+
+
+###################################
+Lab 10 : Conditional expressions in Terraform
+###################################
+
+cd terraform-labs
+mkdir conditions
+cd conditions
+
+vi instance.tf
+provider "aws" {
+  profile = "default"
+  region  = "us-east-2"
+}
+
+resource "aws_instance" "example" {
+  ami           = (var.ami == "ubuntu" ? "ami-0b9064170e32bde34" : "ami-0ba62214afa52bec7")
+  instance_type = "t2.micro"
+  tags = {
+    Name = "Unus-ec2-conditional"
+  }
+}
+
+vi variable.tf
+variable "ami" {
+  type       = string
+  description = "Enter ubuntu to run ubuntu instance or any other value for Red Hat instance"
+}
+
+
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply -auto-approve
+
+Run the plan again with different choice
+
+Notice that the earlier ec2 is destroyed and new one created in case if the choice is different
+
+terraform destroy
+
+clean up the directory
+rm -rf conditions
+
+
+###################################
+Lab 10b : Repeat the above for choosing between t2.micro vs t2.medium  
+###################################
+cd terraform-labs
+mkdir conditions2
+cd conditions2
+
+change the above code to enable similar choice for the instance type
+instead of ubuntu, use t2.medium. If the user chooses anything other than t2.medium, launch t2.micro
+
+
+
+###################################
+11a: Launch multiple servers using for_each loop for devops lab setup
+###################################
+
+cd ~
+mkdir multi-server-with-foreach 
+cd multi-server-with-foreach
+
+
+$ vi provider.tf
+
+provider "aws" {
+  access_key = var.AWS_ACCESS_KEY
+  secret_key = var.AWS_SECRET_KEY
+  region     = var.region
+}
+
+
+$ vi terraform.tfvars
+
+AWS_ACCESS_KEY = "<add> "
+AWS_SECRET_KEY = "<add> "
+
+
+# to create 3 EC2 instances
+$ vi instance.tf
+
+resource "aws_instance" "my-machine" {
+  # Launch 3 servers
+  for_each   = toset(["git-ws-unus", "jenkins-server-unus", "docker-server-unus"])
+
+  ami           = var.ami_id
+  instance_type = var.ins_type
+
+  # Read from the list my-servers to name each server
+  tags = {
+    Name = each.key
+  }
+}
+
+
+# Now, create the variables file with all vars to be used in main.tf
+
+vi variables.tf
+------------
+variable "region" {
+    default = "ap-south-1"
+}
+
+variable "ami_id" {
+    default = "ami-0567e0d2b4b2169ae"
+}
+
+variable "ins_type" {
+    default = "t2.micro"
+}
+
+variable "AWS_ACCESS_KEY" {
+  type = string
+}
+
+variable "AWS_SECRET_KEY" {
+  type = string
+}
+
+
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply -auto-approve
+
+once done, clean up the resources
+$ terraform destroy
+=====================================================================
+
+
+###################################
+11b: In the above program, choose t2.medium for docker and t2.micro for other 2
+###################################
+
+Use conditional expression used in Lab10.
+
+
+
+###################################
+11c: Launch multiple servers using count loop for devops lab setup
+###################################
+Repeat above lab using count loop
+
+cd ~
+mkdir multi-server-lab 
+cd multi-server-lab
+
+
+$ vi provider.tf
+
+provider "aws" {
+  access_key = var.AWS_ACCESS_KEY
+  secret_key = var.AWS_SECRET_KEY
+  region     = var.region
+}
+
+
+$ vi terraform.tfvars
+
+AWS_ACCESS_KEY = "AKID"
+AWS_SECRET_KEY = "SAK"
+
+
+# to create 3 EC2 instances
+$ vi instance.tf
+
+resource "aws_instance" "my-machine" {
+  # Launch 3 servers
+  count = 3 
+
+  ami                    = var.ami_id
+  instance_type = var.ins_type
+
+  # Read from the list my-servers to name each server
+  tags = {
+    Name = var.my-servers[count.index]
+  }
+}
+
+
+# Now, create the variables file with all vars to be used in main.tf
+
+vi variables.tf
+------------
+variable "region" {
+    default = "ap-south-1"
+}
+
+variable "ami_id" {
+    default = "ami-0567e0d2b4b2169ae"
+}
+
+variable "ins_type" {
+    default = "t2.micro"
+}
+
+variable "my-servers" {
+  type    = list(string)
+  default = ["git-ws", "jenkins-server", "docker-server"]
+}
+
+variable "AWS_ACCESS_KEY" {
+  type = string
+}
+
+variable "AWS_SECRET_KEY" {
+  type = string
+}
+
+
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply -auto-approve
+
+once done, clean up the resources
+$ terraform destroy
+
+
+=============================================================
+
+
+
+###################################
+Lab 12 : Terraform Cloud  
+###################################
+
+Task 1: Create a GitHub repository containing Terraform configuration files
+============================================================================
+
+1. Sign In into your Github account, and create a new repository named â€œTerraform-Cloudâ€
+2. Click on the creating a new file link 
+3. Name the file as vars.tf, paste the below contents and commit the file.
+vi vars.tf 
+
+variable "AWS_ACCESS_KEY"{
+  type = string
+}
+variable "AWS_SECRET_KEY"{
+  type = string
+}
+
+4. Add another file by clicking on add file dropdown and select create new file.
+5. Name the file as instance.tf, Insert the below contents and commit the file.
+vi instance.tf
+
+provider "aws" {
+  region = "us-east-1"
+  access_key=var.AWS_ACCESS_KEY
+  secret_key=var.AWS_SECRET_KEY 
+}
+resource "aws_instance" "web" {
+  ami           = "ami-04902260ca3d33422"
+  instance_type = "t3.micro"
+
+  tags = {
+    Name = "unus-HelloWorld"
+  }
+}
+
+Commit New file
+
+
+
+Task 2: Sign up and create an organization: 
+===========================================
+
+1. Quickly signup and create a free account from https://app.terraform.io/signup/account. 
+   Verify the email address. Refer to the screenshots in digify doc.
+2. Let us create an organization to manage workspaces. Once the account is verified, you will land 
+   on the page to create an organization. Provide appropriate name and click Create Organization.
+   you can use the same name for account and organization ex: unus-terraform-cloud
+disable your pop-up blocker at this stage
+
+
+
+Task 3: Create a Workspace
+==========================
+
+You will land on a page to create a workspace, if not, click on a button to create workspace inside an 
+organization.
+
+1. In tab 1, Select VCS (Version Control System)
+2. In tab 2, select the VCS you want to use. Terraform Cloud provides flexibility to integrate with 
+   different version control systems like GitHub, GitLab, Bitbucket, and Azure DevOps. In this demo, we 
+   are using GitHub, so select github.com.
+3. Once you click Github.com, a new window will popup. Sign into your GitHub account from there. 
+   Perform the verification and install Terraform on Git.
+4. Now, we have the GitHub account connected with Terraform cloud. In tab 3 choose the repository where 
+   Terraform configuration are present, in this case its â€œTerraform-Cloudâ€.
+5. In tab 4, Provide the name for the workspace of  your own choice and click the Create Workspace button. 
+   Once the workspace is created, you will see a success message in a popup.
+
+
+Task 4: Plan and Apply the changes
+==================================
+1. Configure variables:  Now we created our workspace and connected to the VCS. Let us plan and apply 
+   the files. Our workspace contains two files, namely instance.tf and vars.tf. We are going to deploy an 
+   EC2 machine on AWS. The snippet of the files is as below:
+
+In Terraform, we pass the sensitive data in 2 ways:
+a. Using Command-line: Sensitive data is recommended to be stored in *. tfvars file that will be git ignored. 
+b. From Terraform Cloud: we can add a variable in a secured manner. let's have a look at it
+
+2. Now on the terraform cloud graphics, click Configure variables. In this demo, we will pass the credentials 
+   of AWS (Access key and secret key) to authenticate with users.  Click on â€˜add variableâ€™ and provide 
+   following details. Make sure you enable sensitive check box. 
+3. Click on Queue plan to plan and apply the workspace. Provide the reason and click Queue plan.
+
+Now, you will notice that the Plan and Apply operation is scheduled. The terminal output is shown on the 
+black screen.  
+
+4. Once Plan is successful, scroll down a bit, and it will wait for the confirmation/approval to 
+apply the changes. Click Confirm & Apply
+5. Provide a message in the textbox and click on Confirm Plan
+You will see that terraform apply is happening.
+6. You can also see the state by clicking on the state tab on the top
+Verify that the resource has been created in your AWS Console
+
+
+Task 5: Terminate the resources
+===============================
+1. On the settings tab, click on Destruction and Deletion
+2. Now, click on Create Destroy Plan.
+3. Provide the Workspace name and click on Queue Destroy plan
+4. Now you will notice that queue is scheduled. The deletion queue has two stages. Plan and apply (to delete 
+   the infra)
+5. Approve to start the delete operation
+6. Once completed, check the run tab to check the status.
+7. Check the AWS console to verify that the resources are no longer active.
+
+
+
+###################################
+Lab 12B : Use Terraform Cloud as Remote Backend only  
+###################################
+
+Create new workspace
+choose CLI mode instead of VCS
+
+Click on Settings at the top menu and create an API token (check left side menu) 
+Click on user settings page 
+Create Token and copy the token into a notepad
+
+
+Now, go to your terraform workstation (your Linux machine)
+
+
+Use Teraform cloud as backend:
+copy the backend code given in terraform cloud page into your workstation as below
+or you can modify the below
+
+mkdir cloud-lab && cd cloud-lab
+
+vi backend.tf
+
+terraform {
+  backend "remote" {
+    organization = "unus-org-2"
+
+    workspaces {
+      name = "New-cloud-2"
+    }
+  }
+}
+
+Now login to terraform cloud via CLI. Type below in command line
+
+terraform login
+It will ask for token, you can enter the token you created in the cloud page:
+<add token>
+
+terraform init 
+
+you can delete the local state file if there is any
+rm terraform.tfstate
+
+Your workspace needs to be configured with your AWS credentials to authenticate the AWS provider.
+add credentials / variables in the cloud
+vi vars.tf
+variable "AWS_REGION" {
+  default = "us-east-2"
+}
+
+variable "AWS_ACCESS_KEY" {
+  default = "xxxxxxxxxxxxx"
+}
+
+variable "AWS_SECRET_KEY" {
+  default = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+}
+
+variable "AMIS" {
+  type = map(string)
+  default = {
+    us-east-2 = "ami-059d836af932792c3"
+    us-west-2 = "ami-02e7fad8336aa2c57"
+    eu-west-1 = "ami-029f9476"
+  }
+}
+
+
+vi provider.tf
+provider "aws" {
+  region = var.AWS_REGION
+  access_key = var.AWS_ACCESS_KEY
+  secret_key = var.AWS_SECRET_KEY
+}
+
+vi insatnce.tf
+resource "aws_instance" "terraform-remoteState" {
+  ami           = var.AMIS[var.AWS_REGION]
+  instance_type = "t2.micro"
+  tags = {
+    Name = "Yourname-tf-cloud-cli-ec2"
+  }
+}
+
+
+terraform fmt
+terraform validate
+terraform plan
+terraform apply
+
+terraform destroy
+
+
+
+
+###################################
+List of Sample AMIs you can use  
+###################################
+
+ap-south-1   = "ami-0db0b3ab7df22e366"
+ap-south-1   = "ami-06a0b4e3b7eb7a300"
+
+us-east-1    = "ami-04902260ca3d33422"
+us-east-1    = "ami-0b0af3577fe5e3532"
+
+us-east-2    = "ami-0ba62214afa52bec7"
+us-east-2    = "ami-0629230e074c580f2"
+
+us-west-1    = "ami-0a741b782c2c8632d"
+
+us-west-2    = "ami-0ac73f33a1888c64a"
+
+ca-central-1 = "ami-0bb84e7329f4fa1f7"
+
+=======================================
+
+
+
+Additional Labs (AL) 
+
+###################################
+AL1: Reading the data from csv file 
+###################################
+
+cd ~
+mkdir csvfile-lab 
+cd csvfile-lab
+
+
+$ vi provider.tf
+
+provider "aws" {
+  access_key = var.AWS_ACCESS_KEY
+  secret_key = var.AWS_SECRET_KEY
+  region     = var.region
+}
+
+
+$ vi terraform.tfvars
+
+AWS_ACCESS_KEY = "01AKIAQDP4B5TE4PWQZT74"
+AWS_SECRET_KEY = "02jbDaJsucEQmFRbOSlXQMJOmNiiu3LNmHVHHmZxRR"
+
+# create your csv file
+vi ec2_list.csv
+type the below into the file
+
+local_id,instance_type,ami,tag
+1,t2.small,ami-0108d6a82a783b352,git-ws-unus
+2,t2.micro,ami-0567e0d2b4b2169ae,jenkins-server-unus
+3,t3.micro,ami-06a0b4e3b7eb7a300,docker-server-unus
+
+
+# to create 3 EC2 instances
+$ vi instance.tf
+
+locals {
+  instances = csvdecode(file("ec2_list.csv"))
+}
+
+resource "aws_instance" "example" {
+  for_each = { for inst in local.instances : inst.local_id => inst }
+
+  instance_type = each.value.instance_type
+  ami           = each.value.ami
+  tags = {
+    Name = each.value.tag
+  }
+}
+
+
+
+# Now, create the variables file with all vars to be used in main.tf
+
+vi variables.tf
+------------
+variable "region" {
+    default = "ap-south-1"
+}
+
+variable "AWS_ACCESS_KEY" {
+  type = string
+}
+
+variable "AWS_SECRET_KEY" {
+  type = string
+}
+
+
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply -auto-approve
+
+once done, clean up the resources
+$ terraform destroy
+
+========================================================================
+
+
+##########################################
+Additional Practice Questions
+##########################################
+
+Q1: Prepare config file for the given scenario:   
+Create a new ec2 instance :
+region : eu-west-1
+ami: choose any ubuntu ami for the region 
+instance type : t2.small
+Use a tag including your name
+
+Include your access key and secret access key in a .tfvars file
+
+Complete the exercise by destroying the infra
+
+############################################
+Q2: Write a config file for the follwoing scenario. User should be asked to choose the rehgion from 
+among the below:   eu-west-1, eu-west-2, eu-south-1.  Based on the chosen region, 
+you should spin up 2 t2.micros. The tag for the two should differ. (Use count loop)
+
+Complete the exercise by destroying the infra
+
+############################################
+Q3: write a config file to create a security group which allows all egress traffic and ingress 
+traffic for http(8080), docker (4243), ssh (22). Name the sec group as 'yourname-sg-dec02'
+
+Complete the exercise by destroying the infra
+
+############################################
+Q4: Create an ALB (load balancer) which will work in ca-central-1a and ca-centra-1b. start 
+an auto scaling group which has instances in these 2 zones. Use 'user data' to install 
+nginx web server in the EC2 insatnces which can show its own ip addresses when we type 
+ALB's dns name in the browser
+
+Complete the exercise by destroying the infra
+
+############################################
+Q5: Create a VPC in Mumbai region with 1 private subnet and public subnet. Public subnet 
+should have a route connecting to an internet gateway. 
+
+Complete the exercise by destroying the infra
+
+############################################
+Q6: Find an appropriate module in terraform module registry and use that to create a
+new security group in us-east-2. add ingress rule for SSH port 22.
+
+Complete the exercise by destroying the infra
+
+############################################
+Q7: I have the following csv file.
+ec2_list.csv
+
+local_id,instance_type,ami,tag
+1,t2.small,ami-0108d6a82a783b352,git-ws-yourname
+2,t2.micro,ami-0567e0d2b4b2169ae,jenkins-server-yourname
+3,t2.medium,ami-06a0b4e3b7eb7a300,docker-server-yourname
+
+Based on this, please create 1 ec2 instance for each.
+
+Complete the exercise by destroying the infra 
+====================================================================
+
+
+Miscellaneous
+-------------
+
+terraform destroy --target aws_instance.terraform_example
