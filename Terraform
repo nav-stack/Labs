@@ -1,5 +1,3 @@
-Note: This is a cheat sheet prepared for easy copying of commands. For detailed
-course material, please use the skillpipe document (https://www.skillpipe.com/) 
 
 Terraform Labs Steps
 ==================
@@ -1518,3 +1516,8 @@ Miscellaneous
 -------------
 
 terraform destroy --target aws_instance.terraform_example
+
+
+
+Note: This is a cheat sheet prepared for easy copying of commands. For detailed
+course material, please use the skillpipe document (https://www.skillpipe.com/) 
