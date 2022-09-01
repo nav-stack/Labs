@@ -10,7 +10,7 @@ Lab 1: Creating an EC2 Instance in AWS and Installing Terraform
 
 Installing Terraform on Ubuntu 20.04 operating system
 ---------------------------------------------------
-Launch a t2.micro instance with OS version Ubuntu 20.04 (North Virginia / us-east-1)
+Launch a t2.micro instance with OS version Ubuntu 20.04 (Tokyo / ap-northeast-1)
 In sec group, include ports 22 and 80. Use tag 'Name:Terraform'
 
 After EC2 is ready:
